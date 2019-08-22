@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/aes
+    docker:
+      - image: circleci/node:10.16.3
+    steps:
+      - checkout
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+      - run:
+          name: Add Yarn
+          command: 'sudo npm install -g yarn@latest'
+      - run:
+          name: Install Yarn Dependencies
+          command: yarn install
+      - run:
+          name: Run Test
+          command: |
+            ./cc-test-reporter before-build
+            yarn test --ci --runInBand --reporters=default --reporters=jest-junit
+            cp ./coverage/clover.xml ./
+            ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
+          environment:
+            JEST_JUNIT_OUTPUT: "reports/junit/js-test-results.xml"

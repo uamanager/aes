@@ -1,0 +1,83 @@
+{
+  "name": "@cryptico/aes",
+  "description": "Typescript implementation of the AES block cipher",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "B. Poettering"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "uamanager"
+    }
+  ],
+  "license": "MIT",
+  "private": false,
+  "main": "lib/aes.js",
+  "browser": "lib/aes.umd.js",
+  "module": "lib/aes.esm.js",
+  "typings": "lib/types/index.d.ts",
+  "files": [
+    "lib/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cryptico-org/aes"
+  },
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "scripts": {
+    "prebuild": "rimraf lib",
+    "build": "rollup -c rollup.config.ts",
+    "commit": "git cz -a",
+    "prepare": "yarn build",
+    "postversion": "git push && git push --tags",
+    "release": "standard-version && git push --follow-tags origin master && npm login && npm publish",
+    "test": "yarn build && jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@commitlint/cli": "^8.1.0",
+    "@commitlint/config-conventional": "^8.1.0",
+    "@types/jest": "^24.0.17",
+    "@types/node": "^12.7.1",
+    "commitizen": "^4.0.3",
+    "cz-conventional-changelog": "3.0.2",
+    "husky": "^3.0.3",
+    "jest": "^24.8.0",
+    "jest-junit": "^7.0.0",
+    "lodash.camelcase": "^4.3.0",
+    "rimraf": "^2.6.1",
+    "rollup": "^1.19.4",
+    "rollup-plugin-commonjs": "^10.0.2",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-typescript2": "^0.22.1",
+    "standard-version": "^7.0.0",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.5.3"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "yarn test",
+      "pre-push": "yarn test"
+    }
+  },
+  "keywords": [
+    "cryptico",
+    "aes",
+    "key",
+    "encrypt",
+    "decrypt",
+    "cryptography"
+  ]
+}

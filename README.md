@@ -17,27 +17,30 @@ The well-functioning of the encryption/decryption routines has been verified for
 ### Import
 
 ```typescript
-    import {AES} from '@cryptico/aes';
+import {AES} from '@cryptico/aes';
 ```
 or
 ```javascript
-    const AES = require('@cryptico/aes').AES;
+const AES = require('@cryptico/aes').AES;
 ```
 
 ### Basic Usage
 
 The following code example enciphers the plaintext block `00 11 22 .. EE FF` with the 256 bit key `00 01 02 .. 1E 1F`.
 ```typescript
+import {AES} from '@cryptico/aes';
 const aes = AES();
 
 const block = new Array(16);
 for (let i = 0; i < 16; i++) {
   block[i] = 0x11 * i;
 }
+
 const key = new Array(32);
 for (let i = 0; i < 32; i++) {
   key[i] = i;
 }
+
 aes.expandKey(key);
 aes.encrypt(block, key);
 ```
