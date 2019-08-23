@@ -4,15 +4,10 @@
   "version": "0.1.1",
   "authors": [
     {
-      "name": "B. Poettering"
-    }
-  ],
-  "contributors": [
-    {
       "name": "uamanager"
     }
   ],
-  "license": "MIT",
+  "license": "GNU GPL V3",
   "private": false,
   "main": "lib/aes.js",
   "browser": "lib/aes.umd.js",

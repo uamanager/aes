@@ -1,162 +1,212 @@
-import {AES_SBOX, AES_SHIFT_ROW_TABS} from './aes.constants';
+import {AES_INVERSE_SBOX, AES_NB, AES_R, AES_SBOX} from './aes.constants';
+import {coefAdd} from './utils/coefAdd';
+import {coefMult} from './utils/coefMult';
+import {gmult} from './utils/gmult';
+import {rotWord} from './utils/rotWord';
+import {subWord} from './utils/subWord';
+
 
 export class AES {
-	private SBOX: number[] = new Array(256);
-	private SHIFT_ROW_TABS: number[] = new Array(16);
-	private XTIME: number[] = new Array(256);
+  private readonly NK;
+  private readonly NR;
+  private readonly KEY: number[];
 
-	constructor () {
-		for (let i = 0; i < 256; i++) {
-			this.SBOX[AES_SBOX[i]] = i;
-		}
+  constructor (key: number[]) {
+    if (!key) {
+      throw new Error('AES requires key!');
+    }
+    const keyLength = key.length;
 
-		for (let i = 0; i < 16; i++) {
-			this.SHIFT_ROW_TABS[AES_SHIFT_ROW_TABS[i]] = i;
-		}
+    switch (keyLength) {
+      case 16:
+        this.NK = 4;
+        this.NR = 10;
+        break;
+      case 24:
+        this.NK = 6;
+        this.NR = 12;
+        break;
+      case 32:
+        this.NK = 8;
+        this.NR = 14;
+        break;
+      default:
+        throw new Error('AES supports only 16, 24 and 32 bytes keys!');
+    }
 
-		for (let i = 0; i < 128; i++) {
-			this.XTIME[i] = i << 1;
-			this.XTIME[128 + i] = (
-				i << 1
-			) ^ 0x1b;
-		}
-	}
+    this.KEY = new Array(AES_NB * (this.NR + 1) * 4);
 
-	public expandKey (key) {
-		const kl = key.length;
-		let ks, Rcon = 1;
+    this.expandKey(key);
+  }
 
-		switch (kl) {
-			case 16:
-				ks = 16 * (
-					10 + 1
-				);
-				break;
-			case 24:
-				ks = 16 * (
-					12 + 1
-				);
-				break;
-			case 32:
-				ks = 16 * (
-					14 + 1
-				);
-				break;
-		}
+  public encrypt (block: number[]): number[] {
+    let state = this.createState(block);
 
-		for (let i = kl; i < ks; i += 4) {
-			let temp = key.slice(i - 4, i);
-			if (i % kl == 0) {
-				temp = [
-					this.SBOX[temp[1]] ^ Rcon,
-					this.SBOX[temp[2]],
-					this.SBOX[temp[3]],
-					this.SBOX[temp[0]]
-				];
-				if ((
-					Rcon <<= 1
-				) >= 256) {
-					Rcon ^= 0x11b;
-				}
-			} else if ((
-				kl > 24
-			) && (
-				i % kl == 16
-			)) {
-				temp = [
-					this.SBOX[temp[0]],
-					this.SBOX[temp[1]],
-					this.SBOX[temp[2]],
-					this.SBOX[temp[3]]
-				];
-			}
-			for (let j = 0; j < 4; j++) {
-				key[i + j] = key[i + j - kl] ^ temp[j];
-			}
-		}
-	}
+    this.addRoundKey(state, 0);
 
-	public encrypt (block: number[], key) { //TODO: define types
-		let i;
-		const l = key.length;
+    for (let r = 1; r < this.NR; r++) {
+      this.subBytes(state);
+      this.shiftRows(state);
+      this.mixColumns(state);
+      this.addRoundKey(state, r);
+    }
 
-		this.addRoundKey(block, key.slice(0, 16));
+    this.subBytes(state);
+    this.shiftRows(state);
+    this.addRoundKey(state, this.NR);
 
-		for (i = 16; i < l - 16; i += 16) {
-			this.subBytes(block, AES_SBOX);
-			this.shiftRows(block, AES_SHIFT_ROW_TABS);
-			this.mixColumns(block);
-			this.addRoundKey(block, key.slice(i, i + 16));
-		}
+    return this.stateToResult(state);
+  }
 
-		this.subBytes(block, AES_SBOX);
-		this.shiftRows(block, AES_SHIFT_ROW_TABS);
-		this.addRoundKey(block, key.slice(i, l));
-	}
+  public decrypt (block: number[]): number[] {
+    let state = this.createState(block);
 
-	public decrypt (block: number[], key) { //TODO: define types
-		const l = key.length;
-		this.addRoundKey(block, key.slice(l - 16, l));
-		this.shiftRows(block, this.SHIFT_ROW_TABS);
-		this.subBytes(block, this.SBOX);
-		for (let i = l - 32; i >= 16; i -= 16) {
-			this.addRoundKey(block, key.slice(i, i + 16));
-			this.mixColumnsInv(block);
-			this.shiftRows(block, this.SHIFT_ROW_TABS);
-			this.subBytes(block, this.SBOX);
-		}
-		this.addRoundKey(block, key.slice(0, 16));
-	}
+    this.addRoundKey(state, this.NR);
 
-	private subBytes (state: number[], sbox: typeof AES_SBOX) { //TODO: define types
-		for (let i = 0; i < 16; i++) {
-			state[i] = sbox[state[i]];
-		}
-	}
+    for (let r = this.NR - 1; r >= 1; r--) {
+      this.shiftRows(state, true);
+      this.subBytes(state, true);
+      this.addRoundKey(state, r);
+      this.mixColumns(state, true);
+    }
 
-	private addRoundKey (state: number[], roundKey: any) { //TODO: define types (state is block and roundkey is aeskey string or array)
-		for (let i = 0; i < 16; i++) {
-			state[i] ^= roundKey[i];
-		}
-	}
+    this.shiftRows(state, true);
+    this.subBytes(state, true);
+    this.addRoundKey(state, 0);
 
-	private shiftRows (state: number[], shiftTab: typeof AES_SHIFT_ROW_TABS) { //TODO: define types
-		const h = [...state];
-		for (let i = 0; i < 16; i++) {
-			state[i] = h[shiftTab[i]];
-		}
-	}
+    return this.stateToResult(state);
+  }
 
-	private mixColumns (state: number[]) {
-		for (let i = 0; i < 16; i += 4) {
-			const s0 = state[i],
-				s1 = state[i + 1],
-				s2 = state[i + 2],
-				s3 = state[i + 3];
-			const h = s0 ^ s1 ^ s2 ^ s3;
+  private createState (block: number[]): number[] {
+    let state = new Array(4 * AES_NB);
 
-			state[i] ^= h ^ this.XTIME[s0 ^ s1];
-			state[i + 1] ^= h ^ this.XTIME[s1 ^ s2];
-			state[i + 2] ^= h ^ this.XTIME[s2 ^ s3];
-			state[i + 3] ^= h ^ this.XTIME[s3 ^ s0];
-		}
-	}
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < AES_NB; j++) {
+        state[AES_NB * i + j] = block[i + 4 * j];
+      }
+    }
 
-	private mixColumnsInv (state: number[]) {
-		for (let i = 0; i < 16; i += 4) {
-			const s0 = state[i],
-				s1 = state[i + 1],
-				s2 = state[i + 2],
-				s3 = state[i + 3];
-			const h = s0 ^ s1 ^ s2 ^ s3;
-			const xh = this.XTIME[h];
-			const h1 = this.XTIME[this.XTIME[xh ^ s0 ^ s2]] ^ h;
-			const h2 = this.XTIME[this.XTIME[xh ^ s1 ^ s3]] ^ h;
+    return state;
+  }
 
-			state[i] ^= h1 ^ this.XTIME[s0 ^ s1];
-			state[i + 1] ^= h2 ^ this.XTIME[s1 ^ s2];
-			state[i + 2] ^= h1 ^ this.XTIME[s2 ^ s3];
-			state[i + 3] ^= h2 ^ this.XTIME[s3 ^ s0];
-		}
-	}
+  private stateToResult (state: number[]): number[] {
+    let result: number[] = new Array(16);
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < AES_NB; j++) {
+        result[i + 4 * j] = state[AES_NB * i + j];
+      }
+    }
+    return result;
+  }
+
+  private expandKey (key: number[]) {
+    let tmp = new Array(4);
+    const length = AES_NB * (this.NR + 1);
+
+    for (let i = 0; i < this.NK; i++) {
+      this.KEY[4 * i + 0] = key[4 * i + 0];
+      this.KEY[4 * i + 1] = key[4 * i + 1];
+      this.KEY[4 * i + 2] = key[4 * i + 2];
+      this.KEY[4 * i + 3] = key[4 * i + 3];
+    }
+
+    for (let i = this.NK; i < length; i++) {
+      tmp[0] = this.KEY[4 * (i - 1) + 0];
+      tmp[1] = this.KEY[4 * (i - 1) + 1];
+      tmp[2] = this.KEY[4 * (i - 1) + 2];
+      tmp[3] = this.KEY[4 * (i - 1) + 3];
+
+      if (i % this.NK === 0) {
+        rotWord(tmp);
+        subWord(tmp);
+        coefAdd(tmp, AES.roundConstant(i / this.NK), tmp);
+      } else if (this.NK > 6 && i % this.NK === 4) {
+        subWord(tmp);
+      }
+
+      this.KEY[4 * i + 0] = this.KEY[4 * (i - this.NK) + 0] ^ tmp[0];
+      this.KEY[4 * i + 1] = this.KEY[4 * (i - this.NK) + 1] ^ tmp[1];
+      this.KEY[4 * i + 2] = this.KEY[4 * (i - this.NK) + 2] ^ tmp[2];
+      this.KEY[4 * i + 3] = this.KEY[4 * (i - this.NK) + 3] ^ tmp[3];
+    }
+  }
+
+  private static roundConstant (i: number) {
+    if (i == 1) {
+      AES_R[0] = 0x01;
+    } else if (i > 1) {
+      AES_R[0] = 0x02;
+      i--;
+      while (i - 1 > 0) {
+        AES_R[0] = gmult(AES_R[0], 0x02);
+        i--;
+      }
+    }
+
+    return AES_R;
+  }
+
+  private addRoundKey (state: number[], round: number) {
+    for (let c = 0; c < AES_NB; c++) {
+      state[AES_NB * 0 + c] = state[AES_NB * 0 + c] ^ this.KEY[4 * AES_NB * round + 4 * c
+      + 0];
+      state[AES_NB * 1 + c] = state[AES_NB * 1 + c] ^ this.KEY[4 * AES_NB * round + 4 * c
+      + 1];
+      state[AES_NB * 2 + c] = state[AES_NB * 2 + c] ^ this.KEY[4 * AES_NB * round + 4 * c
+      + 2];
+      state[AES_NB * 3 + c] = state[AES_NB * 3 + c] ^ this.KEY[4 * AES_NB * round + 4 * c
+      + 3];
+    }
+  }
+
+  private mixColumns (state: number[], inverse: boolean = false) {
+    const a: number[] = inverse ? [0x0e, 0x09, 0x0d, 0x0b] : [0x02, 0x01, 0x01, 0x03];
+    const col: number[] = new Array(4);
+    let result: number[] = new Array(4);
+
+    for (let j = 0; j < AES_NB; j++) {
+      for (let i = 0; i < 4; i++) {
+        col[i] = state[AES_NB * i + j];
+      }
+      coefMult(a, col, result);
+      for (let i = 0; i < 4; i++) {
+        state[AES_NB * i + j] = result[i];
+      }
+    }
+  }
+
+  private shiftRows (state: number[], inverse: boolean = false) {
+    for (let i = 1; i < 4; i++) {
+      let s = 0;
+      while (s < i) {
+        const tmp = inverse ? state[AES_NB * i + AES_NB - 1] : state[AES_NB * i + 0];
+
+        if (inverse) {
+          for (let k = AES_NB - 1; k > 0; k--) {
+            state[AES_NB * i + k] = state[AES_NB * i + k - 1];
+          }
+
+          state[AES_NB * i + 0] = tmp;
+        } else {
+          for (let k = 1; k < AES_NB; k++) {
+            state[AES_NB * i + k - 1] = state[AES_NB * i + k];
+          }
+
+          state[AES_NB * i + AES_NB - 1] = tmp;
+        }
+        s++;
+      }
+    }
+  }
+
+  private subBytes (state: number[], inverse: boolean = false) {
+    const SBOX = inverse ? AES_INVERSE_SBOX : AES_SBOX;
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < AES_NB; j++) {
+        const row = (state[AES_NB * i + j] & 0xf0) >> 4;
+        const col = state[AES_NB * i + j] & 0x0f;
+        state[AES_NB * i + j] = SBOX[16 * row + col];
+      }
+    }
+  }
 }
