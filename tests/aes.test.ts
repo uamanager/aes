@@ -1,0 +1,70 @@
+import {AES} from '../src';
+
+const block = [
+  0x00, 0x11, 0x22, 0x33,
+  0x44, 0x55, 0x66, 0x77,
+  0x88, 0x99, 0xaa, 0xbb,
+  0xcc, 0xdd, 0xee, 0xff
+];
+
+const key128 = [
+  0x00, 0x01, 0x02, 0x03,
+  0x04, 0x05, 0x06, 0x07,
+  0x08, 0x09, 0x0a, 0x0b,
+  0x0c, 0x0d, 0x0e, 0x0f
+];
+
+const key192 = [
+  0x00, 0x01, 0x02, 0x03,
+  0x04, 0x05, 0x06, 0x07,
+  0x08, 0x09, 0x0a, 0x0b,
+  0x0c, 0x0d, 0x0e, 0x0f,
+  0x10, 0x11, 0x12, 0x13,
+  0x14, 0x15, 0x16, 0x17,
+];
+
+const key256 = [
+  0x00, 0x01, 0x02, 0x03,
+  0x04, 0x05, 0x06, 0x07,
+  0x08, 0x09, 0x0a, 0x0b,
+  0x0c, 0x0d, 0x0e, 0x0f,
+  0x10, 0x11, 0x12, 0x13,
+  0x14, 0x15, 0x16, 0x17,
+  0x18, 0x19, 0x1a, 0x1b,
+  0x1c, 0x1d, 0x1e, 0x1f
+];
+
+describe('AES', () => {
+  it('creates instance of AES', () => {
+    expect(new AES(key128)).toBeInstanceOf(AES);
+  });
+
+  it('throws error if key is not specified', () => {
+    expect(() => new AES(null)).toThrowError(Error);
+  });
+
+  it('throws error if key length is out of specification', () => {
+    expect(() => new AES([...key128, 0x1c, 0x1d, 0x1e, 0x1f])).toThrowError(Error);
+  });
+
+  it('encrypt/decrypt AES-128 (NK=4, NR=10)', () => {
+    const aes = new AES(key128);
+    const encrypted = aes.encrypt(block);
+    const decrypted = aes.decrypt(encrypted);
+    expect(block).toEqual(expect.arrayContaining(decrypted));
+  });
+
+  it('encrypt/decrypt AES-192 (NK=6, NR=12)', () => {
+    const aes = new AES(key192);
+    const encrypted = aes.encrypt(block);
+    const decrypted = aes.decrypt(encrypted);
+    expect(block).toEqual(expect.arrayContaining(decrypted));
+  });
+
+  it('encrypt/decrypt AES-256 (NK=8, NR=14)', () => {
+    const aes = new AES(key256);
+    const encrypted = aes.encrypt(block);
+    const decrypted = aes.decrypt(encrypted);
+    expect(block).toEqual(expect.arrayContaining(decrypted));
+  });
+});
