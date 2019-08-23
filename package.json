@@ -29,7 +29,7 @@
     "commit": "git cz -a",
     "prepare": "yarn build",
     "postversion": "git push && git push --tags",
-    "release": "standard-version && git push --follow-tags origin master && npm login && npm publish",
+    "release": "standard-version && git push --follow-tags origin master && npm login --scope=@cryptico && npm publish --access public",
     "test": "yarn build && jest"
   },
   "dependencies": {},
