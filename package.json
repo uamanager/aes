@@ -1,7 +1,7 @@
 {
   "name": "@cryptico/aes",
   "description": "Typescript implementation of the AES block cipher",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "authors": [
     {
       "name": "uamanager"
