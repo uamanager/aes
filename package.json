@@ -6,7 +6,7 @@
     "name": "uamanager",
     "email": "faradey.ivan@gmail.com"
   },
-  "license": "GNU GPL V3",
+  "license": "GPL-3.0-or-later",
   "registry": "https://registry.npmjs.org/",
   "private": false,
   "main": "lib/aes.js",
@@ -50,6 +50,9 @@
     "standard-version": "9.3.2",
     "ts-jest": "27.1.4",
     "typescript": "4.6.3"
+  },
+  "resolutions": {
+    "minimist": "1.2.6"
   },
   "config": {
     "commitizen": {
