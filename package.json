@@ -2,12 +2,12 @@
   "name": "@cryptico/aes",
   "description": "Typescript implementation of the AES block cipher",
   "version": "0.1.2",
-  "authors": [
-    {
-      "name": "uamanager"
-    }
-  ],
+  "author": {
+    "name": "uamanager",
+    "email": "faradey.ivan@gmail.com"
+  },
   "license": "GNU GPL V3",
+  "registry": "https://registry.npmjs.org/",
   "private": false,
   "main": "lib/aes.js",
   "browser": "lib/aes.umd.js",
@@ -20,51 +20,40 @@
     "type": "git",
     "url": "https://github.com/cryptico-org/aes"
   },
-  "engines": {
-    "node": ">=10.16.3"
-  },
   "scripts": {
     "prebuild": "rimraf lib",
     "build": "rollup -c rollup.config.ts",
     "commit": "git cz -a",
-    "prepare": "yarn build",
+    "prepare": "husky install && yarn build",
     "postversion": "git push && git push --tags",
     "release": "standard-version && git push --follow-tags origin master && npm login --scope=@cryptico && npm publish --access public",
     "test": "yarn build && jest"
   },
   "dependencies": {},
   "devDependencies": {
-    "@commitlint/cli": "^8.1.0",
-    "@commitlint/config-conventional": "^8.1.0",
-    "@types/jest": "^24.0.17",
-    "@types/node": "^12.7.1",
-    "commitizen": "^4.0.3",
-    "cz-conventional-changelog": "3.0.2",
-    "husky": "^3.0.3",
-    "jest": "^24.8.0",
-    "jest-junit": "^7.0.0",
-    "lodash.camelcase": "^4.3.0",
-    "rimraf": "^2.6.1",
-    "rollup": "^1.19.4",
-    "rollup-plugin-commonjs": "^10.0.2",
-    "rollup-plugin-json": "^4.0.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-sourcemaps": "^0.4.2",
-    "rollup-plugin-typescript2": "^0.22.1",
-    "standard-version": "^7.0.0",
-    "ts-jest": "^24.0.2",
-    "typescript": "^3.5.3"
+    "@commitlint/cli": "16.2.3",
+    "@commitlint/config-conventional": "16.2.1",
+    "@rollup/plugin-commonjs": "21.1.0",
+    "@rollup/plugin-json": "4.1.0",
+    "@rollup/plugin-node-resolve": "13.2.1",
+    "@types/jest": "27.4.1",
+    "@types/node": "17.0.25",
+    "commitizen": "4.2.4",
+    "cz-conventional-changelog": "3.3.0",
+    "husky": "7.0.4",
+    "jest": "27.5.1",
+    "jest-junit": "13.2.0",
+    "rimraf": "3.0.2",
+    "rollup": "2.70.2",
+    "rollup-plugin-sourcemaps": "0.6.3",
+    "rollup-plugin-typescript2": "0.31.2",
+    "standard-version": "9.3.2",
+    "ts-jest": "27.1.4",
+    "typescript": "4.6.3"
   },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "pre-commit": "yarn test",
-      "pre-push": "yarn test"
     }
   },
   "keywords": [

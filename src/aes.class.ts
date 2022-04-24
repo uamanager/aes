@@ -104,14 +104,14 @@ export class AES {
     const length = AES_NB * (this.NR + 1);
 
     for (let i = 0; i < this.NK; i++) {
-      this.KEY[4 * i + 0] = key[4 * i + 0];
+      this.KEY[4 * i] = key[4 * i];
       this.KEY[4 * i + 1] = key[4 * i + 1];
       this.KEY[4 * i + 2] = key[4 * i + 2];
       this.KEY[4 * i + 3] = key[4 * i + 3];
     }
 
     for (let i = this.NK; i < length; i++) {
-      tmp[0] = this.KEY[4 * (i - 1) + 0];
+      tmp[0] = this.KEY[4 * (i - 1)];
       tmp[1] = this.KEY[4 * (i - 1) + 1];
       tmp[2] = this.KEY[4 * (i - 1) + 2];
       tmp[3] = this.KEY[4 * (i - 1) + 3];
@@ -124,7 +124,7 @@ export class AES {
         subWord(tmp);
       }
 
-      this.KEY[4 * i + 0] = this.KEY[4 * (i - this.NK) + 0] ^ tmp[0];
+      this.KEY[4 * i] = this.KEY[4 * (i - this.NK)] ^ tmp[0];
       this.KEY[4 * i + 1] = this.KEY[4 * (i - this.NK) + 1] ^ tmp[1];
       this.KEY[4 * i + 2] = this.KEY[4 * (i - this.NK) + 2] ^ tmp[2];
       this.KEY[4 * i + 3] = this.KEY[4 * (i - this.NK) + 3] ^ tmp[3];
@@ -148,14 +148,10 @@ export class AES {
 
   private addRoundKey (state: number[], round: number) {
     for (let c = 0; c < AES_NB; c++) {
-      state[AES_NB * 0 + c] = state[AES_NB * 0 + c] ^ this.KEY[4 * AES_NB * round + 4 * c
-      + 0];
-      state[AES_NB * 1 + c] = state[AES_NB * 1 + c] ^ this.KEY[4 * AES_NB * round + 4 * c
-      + 1];
-      state[AES_NB * 2 + c] = state[AES_NB * 2 + c] ^ this.KEY[4 * AES_NB * round + 4 * c
-      + 2];
-      state[AES_NB * 3 + c] = state[AES_NB * 3 + c] ^ this.KEY[4 * AES_NB * round + 4 * c
-      + 3];
+      state[c] ^= this.KEY[4 * AES_NB * round + 4 * c];
+      state[AES_NB + c] ^= this.KEY[4 * AES_NB * round + 4 * c + 1];
+      state[AES_NB * 2 + c] ^= this.KEY[4 * AES_NB * round + 4 * c + 2];
+      state[AES_NB * 3 + c] ^= this.KEY[4 * AES_NB * round + 4 * c + 3];
     }
   }
 
@@ -186,7 +182,7 @@ export class AES {
             state[AES_NB * i + k] = state[AES_NB * i + k - 1];
           }
 
-          state[AES_NB * i + 0] = tmp;
+          state[AES_NB * i] = tmp;
         } else {
           for (let k = 1; k < AES_NB; k++) {
             state[AES_NB * i + k - 1] = state[AES_NB * i + k];

@@ -1,19 +1,22 @@
-version: 2
+version: 2.1
+orbs:
+  node: circleci/node@5.0.2
 jobs:
   build:
-    working_directory: ~/aes
+    working_directory: ~/qcp
     docker:
-      - image: circleci/node:10.16.3
+      - image: 'cimg/base:stable'
     steps:
       - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '16.13'
+      - run: node --version
       - run:
           name: Setup Code Climate test-reporter
           command: |
             curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
             chmod +x ./cc-test-reporter
-      - run:
-          name: Add Yarn
-          command: 'sudo npm install -g yarn@latest'
       - run:
           name: Install Yarn Dependencies
           command: yarn install
@@ -26,3 +29,7 @@ jobs:
             ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
           environment:
             JEST_JUNIT_OUTPUT: "reports/junit/js-test-results.xml"
+workflows:
+  build:
+    jobs:
+      - build
