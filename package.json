@@ -36,7 +36,7 @@
     "@rollup/plugin-commonjs": "25.0.2",
     "@rollup/plugin-json": "6.0.0",
     "@rollup/plugin-node-resolve": "15.1.0",
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.3",
     "@types/node": "18.16.19",
     "commitizen": "4.3.0",
     "cz-conventional-changelog": "3.3.0",
